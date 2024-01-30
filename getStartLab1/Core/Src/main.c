@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include <stdatomic.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -95,12 +96,14 @@ void StartTask5(void *argument);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
-
+atomic_int state = 1;
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-uint8_t dataTask1[] = "Task1: How are you?\r\n";
-uint8_t dataTask2[] = "Task2: I am fine and you.\r\n";
-uint8_t dataTask3[] = "Task3: It is nice you see here, Task3\r\n";
+uint8_t dataTask1[] = "Green\r\n";
+uint8_t dataTask2[] = "Orange\r\n";
+uint8_t dataTask3[] = "Red\r\n";
+
+uint8_t state_string[] = "State \r";
 
 
 int flag = 0;
@@ -113,6 +116,8 @@ int flag = 0;
   */
 int main(void)
 {
+
+
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -339,11 +344,28 @@ void StartTask1(void *argument)
   for(;;)
   {
 
-	  HAL_UART_Transmit(&huart2, dataTask1, sizeof(dataTask1), 1000);
-	 // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5, GPIO_PIN_RESET);
-	  HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_4);//Green LED
+	  while(state == 3) {
+		  HAL_UART_Transmit(&huart2, dataTask1, sizeof(dataTask1), 1000);
+//		  HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_4); //Green LED
+		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_SET); //Green
+		  osDelay(10000);
+		  state = 4;
 
-      osDelay(1000);
+	  }
+
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_RESET); //Green
+
+//	  HAL_UART_Transmit(&huart2, dataTask1, sizeof(dataTask1), 1000);
+	 // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5, GPIO_PIN_RESET);
+//	  HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_4);//Green LED
+//	  uint8_t local_state = state;
+//	  uint8_t state_string = "state: " + local_state;
+//	  uint8_t state_string = "state: ";
+	  //uint8_t state_value[] = state_string + local_state;
+//	  char string[16] = "State: ";
+//	  HAL_UART_Transmit(&huart2, state_string, sizeof(state_string), 1000);
+//	  HAL_UART_Transmit(&huart2, (uint8_t *)string, sprintf(string, "%d", state), 1000);
+//	  osDelay(1000);
   }
   /* USER CODE END 5 */
 }
@@ -361,9 +383,28 @@ void StartTask2(void *argument)
   /* Infinite loop */
   for(;;)
   {
-	  HAL_UART_Transmit(&huart2, dataTask2, sizeof(dataTask2), 1000);
-	  HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_5);//Orange LED
-	  osDelay(1000);
+	  while (state == 2) {
+		  HAL_UART_Transmit(&huart2, dataTask2, sizeof(dataTask2), 1000);
+//		  HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_5);//Orange LED
+		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_SET); //Orange
+		  osDelay(2000);
+		  state = 3;
+	  }
+
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_RESET); //Orange
+
+	  while (state == 4) {
+		  HAL_UART_Transmit(&huart2, dataTask2, sizeof(dataTask2), 1000);
+		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_SET); //Orange
+		  osDelay(2000);
+		  state = 1;
+	  }
+
+//	  HAL_UART_Transmit(&huart2, dataTask2, sizeof(dataTask2), 1000);
+//	  HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_5);//Orange LED
+//	  state++;
+//	  osDelay(1000);
+
   }
   /* USER CODE END StartTask2 */
 }
@@ -381,9 +422,31 @@ void StartTask3(void *argument)
   /* Infinite loop */
   for(;;)
   {
-	  HAL_UART_Transmit(&huart2, dataTask3, sizeof(dataTask3), 1000);
-	  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_3);//Red LED
-	  osDelay(1000);
+	  while (state == 1) {
+		  HAL_UART_Transmit(&huart2, dataTask3, sizeof(dataTask3), 1000);
+//		  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_3);//Red LED
+		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, GPIO_PIN_SET); //Red
+		  osDelay(10000);
+		  state = 2;
+	  }
+
+	  while (state == 2) {
+		  HAL_UART_Transmit(&huart2, dataTask3, sizeof(dataTask3), 1000);
+		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, GPIO_PIN_SET); //Red
+		  osDelay(2000);
+		  state = 3;
+	  }
+
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, GPIO_PIN_RESET); //Red
+
+//	  HAL_UART_Transmit(&huart2, dataTask3, sizeof(dataTask3), 1000);
+//	  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_3);//Red LED
+//	  osDelay(1000);
+
+//	  while (state == 2) {
+//		  HAL_UART_Transmit(&huart2, dataTask3, sizeof(dataTask3), 1000);
+//		  osDelay(10000);
+//	  }
   }
   /* USER CODE END StartTask3 */
 }
