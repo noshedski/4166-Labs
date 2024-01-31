@@ -344,12 +344,17 @@ void StartTask1(void *argument)
   for(;;)
   {
 
-	  while(state == 3) {
-		  HAL_UART_Transmit(&huart2, dataTask1, sizeof(dataTask1), 1000);
-//		  HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_4); //Green LED
-		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_SET); //Green
-		  osDelay(10000);
-		  state = 4;
+	  if (state == 3) {
+      if (flag){
+        state = 5; // goes to auto yellow, ped red
+      }else{
+        HAL_UART_Transmit(&huart2, dataTask1, sizeof(dataTask1), 1000);
+  //		HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_4); //Green LED
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_SET); //Green
+        osDelay(10000);
+        state = 4;
+      }
+		  
 
 	  }
 
@@ -383,22 +388,43 @@ void StartTask2(void *argument)
   /* Infinite loop */
   for(;;)
   {
-	  while (state == 2) {
-		  HAL_UART_Transmit(&huart2, dataTask2, sizeof(dataTask2), 1000);
-//		  HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_5);//Orange LED
-		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_SET); //Orange
-		  osDelay(2000);
-		  state = 3;
-	  }
 
-	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_RESET); //Orange
+    if(flag) {
+      if (state == 5){// auto yellow, ped red
+        HAL_UART_Transmit(&huart2, dataTask2, sizeof(dataTask2), 1000);
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_SET); //Orange
+        osDelay(3000);
+        state = 6; //goes to auto red, ped red
+      }
 
-	  while (state == 4) {
-		  HAL_UART_Transmit(&huart2, dataTask2, sizeof(dataTask2), 1000);
-		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_SET); //Orange
-		  osDelay(2000);
-		  state = 1;
-	  }
+      if (state == 9){ // auto red, auto yellow, ped red
+        HAL_UART_Transmit(&huart2, dataTask2, sizeof(dataTask2), 1000);
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_SET); //Orange
+        osDelay(2000);
+        flag = 0; // back to p1 states
+        state = 3; // goes back to p1 state we entered in (auto green, ped red)
+      }
+
+      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_RESET); //Orange
+
+    } else {
+      if (state == 2) {
+        HAL_UART_Transmit(&huart2, dataTask2, sizeof(dataTask2), 1000);
+  //		  HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_5);//Orange LED
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_SET); //Orange
+        osDelay(2000);
+        state = 3;
+      }
+
+      HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_RESET); //Orange
+
+      if (state == 4) {
+        HAL_UART_Transmit(&huart2, dataTask2, sizeof(dataTask2), 1000);
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_SET); //Orange
+        osDelay(2000);
+        state = 1;
+      }
+    }
 
 //	  HAL_UART_Transmit(&huart2, dataTask2, sizeof(dataTask2), 1000);
 //	  HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_5);//Orange LED
@@ -422,20 +448,50 @@ void StartTask3(void *argument)
   /* Infinite loop */
   for(;;)
   {
-	  while (state == 1) {
-		  HAL_UART_Transmit(&huart2, dataTask3, sizeof(dataTask3), 1000);
-//		  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_3);//Red LED
-		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, GPIO_PIN_SET); //Red
-		  osDelay(10000);
-		  state = 2;
-	  }
 
-	  while (state == 2) {
-		  HAL_UART_Transmit(&huart2, dataTask3, sizeof(dataTask3), 1000);
-		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, GPIO_PIN_SET); //Red
-		  osDelay(2000);
-		  state = 3;
-	  }
+    if(flag){
+      if (state == 6){// auto red, ped red
+        HAL_UART_Transmit(&huart2, dataTask3, sizeof(dataTask3), 1000);
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, GPIO_PIN_SET); //Red
+        osDelay(1000);
+        state = 7; // goes to auto red, ped green
+      } 
+      if (state == 7){ // auto red, ped green
+        HAL_UART_Transmit(&huart2, dataTask3, sizeof(dataTask3), 1000);
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, GPIO_PIN_SET); //Red
+        osDelay(10000); 
+        state = 8;// goes to auto red, ped red
+      }
+      if (state == 8){ // auto red, ped red
+        HAL_UART_Transmit(&huart2, dataTask3, sizeof(dataTask3), 1000);
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, GPIO_PIN_SET); //Red
+        osDelay(1000);
+        state = 9; // goes to auto red, auto yellow, ped red
+      }
+      if (state == 9){ // ped red, auto yellow, ped red
+        HAL_UART_Transmit(&huart2, dataTask3, sizeof(dataTask3), 1000);
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, GPIO_PIN_SET); //Red
+        osDelay(2000);
+        flag = 0; // end of extended states
+        state = 3; // back to regular states (from p1) NOTE: I think ped red should be base case for p1 states
+      }
+
+    }else {
+      if (state == 1) {
+        HAL_UART_Transmit(&huart2, dataTask3, sizeof(dataTask3), 1000);
+  //		  HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_3);//Red LED
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, GPIO_PIN_SET); //Red
+        osDelay(10000);
+        state = 2;
+      }
+
+      if (state == 2) {
+        HAL_UART_Transmit(&huart2, dataTask3, sizeof(dataTask3), 1000);
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, GPIO_PIN_SET); //Red
+        osDelay(2000);
+        state = 3;
+      }
+    }
 
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, GPIO_PIN_RESET); //Red
 
@@ -465,11 +521,11 @@ void StartTask4(void *argument)
   for(;;)
   {
 	  uint8_t dataTask4[] = "Task 5: I toggle GPIOB pin 10.\r\n";
-	  if(flag)
-	  {
-	     HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_10);
-	 	 flag = 0;
-	     HAL_UART_Transmit(&huart2, dataTask4, sizeof(dataTask4), 1000);
+	  if(flag){
+	    HAL_UART_Transmit(&huart2, dataTask4, sizeof(dataTask4), 1000)
+      HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_10);
+	 	  flag = 0;
+	    
 	 	}
 	 	osDelay(100);
   }
