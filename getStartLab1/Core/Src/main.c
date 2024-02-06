@@ -374,8 +374,11 @@ void StartTask1(void *argument) //MOTOR GREEN
 		  HAL_UART_Transmit(&huart2, dataTask1, sizeof(dataTask1), 1000);
 		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_SET); //Green
 	  }
+	  else {
+		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_RESET); //Green
+	  }
 
-	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_RESET); //Green
+//	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_RESET); //Green
 
 
   }
@@ -575,14 +578,14 @@ void StartTask4(void *argument) // PED RED
 //	 	}
 //	 	osDelay(100);
 
-	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_SET); //Ped Red
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET); //Ped Red
 
 	  if (!flag) {
 //		  HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_10);
 //		  HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13);
 		  if (!HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13)) {
 			  flag = 1;
-			  state = 4;
+			  state = 2;
 		  }
 //			  flag = 1;
 
