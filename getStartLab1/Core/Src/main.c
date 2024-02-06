@@ -319,7 +319,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PB10 PB3 PB4 PB5 */
-  GPIO_InitStruct.Pin = GPIO_PIN_10|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5;
+  GPIO_InitStruct.Pin = GPIO_PIN_10|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -444,6 +444,7 @@ void StartTask2(void *argument) // MOTOR YELLOW
     if (state == 2) {
     	HAL_UART_Transmit(&huart2, dataTask2, sizeof(dataTask2), 1000);
     	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_SET); //Orange
+
 		osDelay(3000);
 		state = 3;
     }
@@ -580,28 +581,30 @@ void StartTask4(void *argument) // PED RED
 
 //	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET); //Ped Red
 
+	  if (state == 4) {
+		  HAL_UART_Transmit(&huart2, dataTask4, sizeof(dataTask4), 1000);
+		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET); //Red
+		  osDelay(10000);
+		  state = 5;
+	  }
+	  else {
+		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET); //Ped Red
+	  }
+
 	  if (!flag) {
 //		  HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_10);
 //		  HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13);
 		  if (!HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13)) {
 			  flag = 1;
 			  state = 2;
-			  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET); //Ped Red
+			   //Ped Red
 		  }
 //			  flag = 1;
 
 //		  state = 4;
 	  }
 
-	  if (state == 4) {
-		  HAL_UART_Transmit(&huart2, dataTask4, sizeof(dataTask4), 1000);
-		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET); //Red
-		  osDelay(10000);
-//		  state = 4;
-	  }
-	  else {
-		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET); //Ped Red
-	  }
+
   }
   /* USER CODE END StartTask4 */
 }
