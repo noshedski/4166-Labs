@@ -586,6 +586,7 @@ void StartTask4(void *argument) // PED RED
 		  if (!HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13)) {
 			  flag = 1;
 			  state = 2;
+			  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET); //Ped Red
 		  }
 //			  flag = 1;
 
