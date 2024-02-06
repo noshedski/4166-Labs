@@ -578,7 +578,7 @@ void StartTask4(void *argument) // PED RED
 //	 	}
 //	 	osDelay(100);
 
-	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET); //Ped Red
+//	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET); //Ped Red
 
 	  if (!flag) {
 //		  HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_10);
@@ -597,6 +597,9 @@ void StartTask4(void *argument) // PED RED
 		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET); //Red
 		  osDelay(10000);
 //		  state = 4;
+	  }
+	  else {
+		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET); //Ped Red
 	  }
   }
   /* USER CODE END StartTask4 */
@@ -644,6 +647,7 @@ void StartTask5(void *argument) // PED GREEN
 		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_SET); //Green
 		  osDelay(10000);
 		  state = 5;
+		  flag = 0;
 	  }
   }
   /* USER CODE END StartTask5 */
