@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -50,6 +51,10 @@ I2C_HandleTypeDef hi2c1;
 
 UART_HandleTypeDef huart2;
 
+osThreadId defaultTaskHandle;
+osThreadId myTask01Handle;
+osThreadId myTask03Handle;
+char msg[12];
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -60,6 +65,10 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_ADC1_Init(void);
+void StartDefaultTask(void const * argument);
+void ADCTask(void const * argument);
+void LCDTask(void const * argument);
+
 /* USER CODE BEGIN PFP */
 uint32_t sensorValue = 0;
 float fvoltage = 0;
@@ -93,7 +102,7 @@ int __io_putchar(int ch)
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-  char msg[12];
+
 
   /* USER CODE END 1 */
 
@@ -127,34 +136,73 @@ int main(void)
 
   /* USER CODE END 2 */
 
+  /* USER CODE BEGIN RTOS_MUTEX */
+  /* add mutexes, ... */
+  /* USER CODE END RTOS_MUTEX */
+
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* add semaphores, ... */
+  /* USER CODE END RTOS_SEMAPHORES */
+
+  /* USER CODE BEGIN RTOS_TIMERS */
+  /* start timers, add new ones, ... */
+  /* USER CODE END RTOS_TIMERS */
+
+  /* USER CODE BEGIN RTOS_QUEUES */
+  /* add queues, ... */
+  /* USER CODE END RTOS_QUEUES */
+
+  /* Create the thread(s) */
+  /* definition and creation of defaultTask */
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+
+  /* definition and creation of myTask01 */
+  osThreadDef(myTask01, ADCTask, osPriorityNormal, 0, 128);
+  myTask01Handle = osThreadCreate(osThread(myTask01), NULL);
+
+  /* definition and creation of myTask03 */
+  osThreadDef(myTask03, LCDTask, osPriorityNormal, 0, 128);
+  myTask03Handle = osThreadCreate(osThread(myTask03), NULL);
+
+  /* USER CODE BEGIN RTOS_THREADS */
+  /* add threads, ... */
+  /* USER CODE END RTOS_THREADS */
+
+  /* Start scheduler */
+  osKernelStart();
+
+  //Task1Handle = osThreadNew(StartTask1, NULL, &Task1_attributes);
+
+  /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-	  	  /*1. Start ADC */
-	  	 HAL_ADC_Start(&hadc1);
-
-	  	 /*2. Poll for conversion */
-	  	 HAL_ADC_PollForConversion(&hadc1,1);
-
-	  	 /*3. Get conversion */
-	  	 sensorValue = HAL_ADC_GetValue(&hadc1);
-	  	 fvoltage = (float)sensorValue * (3.3/4095.0);
-		 
-		  sprintf(msg, "%.2f V", fvoltage);
-
-
-	  HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
-
-	  	 SSD1306_GotoXY (0, 30);
-		SSD1306_UpdateScreen();
-		SSD1306_Puts (msg, &Font_11x18, 1);
-		SSD1306_UpdateScreen();
-		HAL_Delay (500);
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
-  }
+//  while (1)
+//  {
+//	  	  /*1. Start ADC */
+//	  	 HAL_ADC_Start(&hadc1);
+//
+//	  	 /*2. Poll for conversion */
+//	  	 HAL_ADC_PollForConversion(&hadc1,1);
+//
+//	  	 /*3. Get conversion */
+//	  	 sensorValue = HAL_ADC_GetValue(&hadc1);
+//	  	 fvoltage = (float)sensorValue * (3.3/4095.0);
+//
+//		  sprintf(msg, "%.2f V", fvoltage);
+//
+//
+//		  HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
+//
+//	  	 SSD1306_GotoXY (0, 30);
+//		SSD1306_UpdateScreen();
+//		SSD1306_Puts (msg, &Font_11x18, 1);
+//		SSD1306_UpdateScreen();
+//		HAL_Delay (500);
+//    /* USER CODE END WHILE */
+//
+//    /* USER CODE BEGIN 3 */
+//  }
   /* USER CODE END 3 */
 }
 
@@ -364,6 +412,76 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
+
+/* USER CODE BEGIN Header_StartDefaultTask */
+/**
+  * @brief  Function implementing the defaultTask thread.
+  * @param  argument: Not used
+  * @retval None
+  */
+/* USER CODE END Header_StartDefaultTask */
+void StartDefaultTask(void const * argument)
+{
+  /* USER CODE BEGIN 5 */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END 5 */
+}
+
+/* USER CODE BEGIN Header_ADCTask */
+/**
+* @brief Function implementing the myTask01 thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_ADCTask */
+void ADCTask(void const * argument)
+{
+  /* USER CODE BEGIN ADCTask */
+  /* Infinite loop */
+  for(;;)
+  {
+	  	 HAL_ADC_Start(&hadc1);
+
+	  	 /*2. Poll for conversion */
+	  	 HAL_ADC_PollForConversion(&hadc1,1);
+
+	  	 /*3. Get conversion */
+	  	 sensorValue = HAL_ADC_GetValue(&hadc1);
+	  	 fvoltage = (float)sensorValue * (3.3/4095.0);
+
+		  sprintf(msg, "%.2f V", fvoltage);
+
+
+		  HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
+  }
+  /* USER CODE END ADCTask */
+}
+
+/* USER CODE BEGIN Header_LCDTask */
+/**
+* @brief Function implementing the myTask03 thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_LCDTask */
+void LCDTask(void const * argument)
+{
+  /* USER CODE BEGIN LCDTask */
+  /* Infinite loop */
+  for(;;)
+  {
+	  	 SSD1306_GotoXY (0, 30);
+		SSD1306_UpdateScreen();
+		SSD1306_Puts (msg, &Font_11x18, 1);
+		SSD1306_UpdateScreen();
+		HAL_Delay (500);
+  }
+  /* USER CODE END LCDTask */
+}
 
 /**
   * @brief  Period elapsed callback in non blocking mode
