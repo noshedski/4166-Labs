@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -50,6 +51,11 @@ I2C_HandleTypeDef hi2c1;
 
 UART_HandleTypeDef huart2;
 
+osThreadId defaultTaskHandle;
+osThreadId KeypadTaskHandle;
+osThreadId LCDDisplayHandle;
+osThreadId ArmLEDHandle;
+osThreadId StateManagerHandle;
 /* USER CODE BEGIN PV */
 extern char key;
 char hold[4];
@@ -60,6 +66,12 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_I2C1_Init(void);
+void StartDefaultTask(void const * argument);
+void Keypad(void const * argument);
+void Display(void const * argument);
+void RedGreenLED(void const * argument);
+void ArmState(void const * argument);
+
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -101,34 +113,66 @@ int main(void)
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
   /* USER CODE BEGIN 2 */
-    SSD1306_Init();
-    SSD1306_GotoXY (0,0);
-    //SSD1306_Puts ("Voltage:", &Font_11x18, 1);
-    SSD1306_Puts ("Enter Code:", &Font_11x18, 1);
-    SSD1306_GotoXY (0, 30);
-    SSD1306_UpdateScreen();
-    SSD1306_UpdateScreen();
-    HAL_Delay (500);
+
 
   /* USER CODE END 2 */
 
+  /* USER CODE BEGIN RTOS_MUTEX */
+  /* add mutexes, ... */
+  /* USER CODE END RTOS_MUTEX */
+
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* add semaphores, ... */
+  /* USER CODE END RTOS_SEMAPHORES */
+
+  /* USER CODE BEGIN RTOS_TIMERS */
+  /* start timers, add new ones, ... */
+  /* USER CODE END RTOS_TIMERS */
+
+  /* USER CODE BEGIN RTOS_QUEUES */
+  /* add queues, ... */
+  /* USER CODE END RTOS_QUEUES */
+
+  /* Create the thread(s) */
+  /* definition and creation of defaultTask */
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+
+  /* definition and creation of KeypadTask */
+  osThreadDef(KeypadTask, Keypad, osPriorityNormal, 0, 128);
+  KeypadTaskHandle = osThreadCreate(osThread(KeypadTask), NULL);
+
+  /* definition and creation of LCDDisplay */
+  osThreadDef(LCDDisplay, Display, osPriorityNormal, 0, 128);
+  LCDDisplayHandle = osThreadCreate(osThread(LCDDisplay), NULL);
+
+  /* definition and creation of ArmLED */
+  osThreadDef(ArmLED, RedGreenLED, osPriorityNormal, 0, 128);
+  ArmLEDHandle = osThreadCreate(osThread(ArmLED), NULL);
+
+  /* definition and creation of StateManager */
+  osThreadDef(StateManager, ArmState, osPriorityNormal, 0, 128);
+  StateManagerHandle = osThreadCreate(osThread(StateManager), NULL);
+
+  /* USER CODE BEGIN RTOS_THREADS */
+  /* add threads, ... */
+  /* USER CODE END RTOS_THREADS */
+
+  /* Start scheduler */
+  osKernelStart();
+
+  /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
-	/* D10 to D7 as input pins for row 0 to row 3. D6 to D3 as output for column pins C1 to C3*/
-	  key = Get_Key();
-	  sprintf(hold, "%c", key);
-	  HAL_UART_Transmit(&huart2, (uint8_t *)hold, strlen(hold), 100);
-	  SSD1306_GotoXY (0, 30);
-	  SSD1306_UpdateScreen();
-	  SSD1306_Puts (hold, &Font_11x18, 1);
-	  SSD1306_UpdateScreen();
-	  HAL_Delay (500);
-  }
+//  while (1)
+//  {
+//    /* USER CODE END WHILE */
+//
+//    /* USER CODE BEGIN 3 */
+//	/* D10 to D7 as input pins for row 0 to row 3. D6 to D3 as output for column pins C1 to C3*/
+//
+//
+//  }
   /* USER CODE END 3 */
 }
 
@@ -308,6 +352,112 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
+
+/* USER CODE BEGIN Header_StartDefaultTask */
+/**
+  * @brief  Function implementing the defaultTask thread.
+  * @param  argument: Not used
+  * @retval None
+  */
+/* USER CODE END Header_StartDefaultTask */
+void StartDefaultTask(void const * argument)
+{
+  /* USER CODE BEGIN 5 */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END 5 */
+}
+
+/* USER CODE BEGIN Header_Keypad */
+/**
+* @brief Function implementing the KeypadTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_Keypad */
+void Keypad(void const * argument)
+{
+  /* USER CODE BEGIN Keypad */
+  /* Infinite loop */
+  for(;;)
+  {
+
+	    SSD1306_Init();
+	    SSD1306_GotoXY (0,0);
+	    //SSD1306_Puts ("Voltage:", &Font_11x18, 1);
+	    SSD1306_Puts ("Enter Code:", &Font_11x18, 1);
+	    SSD1306_GotoXY (0, 30);
+	    SSD1306_UpdateScreen();
+	    SSD1306_UpdateScreen();
+	    HAL_Delay (500);
+
+	  key = Get_Key();
+	  sprintf(hold, "%c", key);
+	  HAL_UART_Transmit(&huart2, (uint8_t *)hold, strlen(hold), 100);
+  }
+  /* USER CODE END Keypad */
+}
+
+/* USER CODE BEGIN Header_Display */
+/**
+* @brief Function implementing the LCDDisplay thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_Display */
+void Display(void const * argument)
+{
+  /* USER CODE BEGIN Display */
+  /* Infinite loop */
+  for(;;)
+  {
+	  SSD1306_GotoXY (0, 30);
+	  SSD1306_UpdateScreen();
+	  SSD1306_Puts (hold, &Font_11x18, 1);
+	  SSD1306_UpdateScreen();
+	  HAL_Delay (500);
+  }
+  /* USER CODE END Display */
+}
+
+/* USER CODE BEGIN Header_RedGreenLED */
+/**
+* @brief Function implementing the ArmLED thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_RedGreenLED */
+void RedGreenLED(void const * argument)
+{
+  /* USER CODE BEGIN RedGreenLED */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END RedGreenLED */
+}
+
+/* USER CODE BEGIN Header_ArmState */
+/**
+* @brief Function implementing the StateManager thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_ArmState */
+void ArmState(void const * argument)
+{
+  /* USER CODE BEGIN ArmState */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END ArmState */
+}
 
 /**
   * @brief  Period elapsed callback in non blocking mode
