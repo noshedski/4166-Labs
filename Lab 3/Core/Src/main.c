@@ -54,11 +54,16 @@ UART_HandleTypeDef huart2;
 osThreadId defaultTaskHandle;
 osThreadId KeypadTaskHandle;
 osThreadId LCDDisplayHandle;
-osThreadId ArmLEDHandle;
+osThreadId LEDTaskHandle;
 osThreadId StateManagerHandle;
 /* USER CODE BEGIN PV */
 extern char key;
-char hold[4];
+char hold[6];
+char password[6];
+bool isArmed = false;
+int idx = 0;
+char msg[12] = "1";
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -113,7 +118,14 @@ int main(void)
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
   /* USER CODE BEGIN 2 */
-
+    SSD1306_Init();
+    SSD1306_GotoXY (0,0);
+    //SSD1306_Puts ("Voltage:", &Font_11x18, 1);
+    SSD1306_Puts ("Enter Code:", &Font_11x18, 1);
+    SSD1306_GotoXY (0, 30);
+    SSD1306_UpdateScreen();
+    SSD1306_UpdateScreen();
+    HAL_Delay (500);
 
   /* USER CODE END 2 */
 
@@ -146,9 +158,9 @@ int main(void)
   osThreadDef(LCDDisplay, Display, osPriorityNormal, 0, 128);
   LCDDisplayHandle = osThreadCreate(osThread(LCDDisplay), NULL);
 
-  /* definition and creation of ArmLED */
-  osThreadDef(ArmLED, RedGreenLED, osPriorityNormal, 0, 128);
-  ArmLEDHandle = osThreadCreate(osThread(ArmLED), NULL);
+  /* definition and creation of LEDTask */
+  osThreadDef(LEDTask, RedGreenLED, osPriorityNormal, 0, 128);
+  LEDTaskHandle = osThreadCreate(osThread(LEDTask), NULL);
 
   /* definition and creation of StateManager */
   osThreadDef(StateManager, ArmState, osPriorityNormal, 0, 128);
@@ -164,15 +176,21 @@ int main(void)
   /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-//  while (1)
-//  {
-//    /* USER CODE END WHILE */
-//
-//    /* USER CODE BEGIN 3 */
-//	/* D10 to D7 as input pins for row 0 to row 3. D6 to D3 as output for column pins C1 to C3*/
-//
-//
-//  }
+  while (1)
+  {
+    /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
+	/* D10 to D7 as input pins for row 0 to row 3. D6 to D3 as output for column pins C1 to C3*/
+//	  key = Get_Key();
+//	  sprintf(hold, "%c", key);
+//	  HAL_UART_Transmit(&huart2, (uint8_t *)hold, strlen(hold), 100);
+//	  SSD1306_GotoXY (0, 30);
+//	  SSD1306_UpdateScreen();
+//	  SSD1306_Puts (hold, &Font_11x18, 1);
+//	  SSD1306_UpdateScreen();
+//	  HAL_Delay (500);
+  }
   /* USER CODE END 3 */
 }
 
@@ -311,7 +329,8 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, KC0_Pin|KC3_Pin|KC1_Pin|KC2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, KC0_Pin|GPIO_PIN_13|GPIO_PIN_14|KC3_Pin
+                          |KC1_Pin|KC2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : PA5 */
   GPIO_InitStruct.Pin = GPIO_PIN_5;
@@ -320,8 +339,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : KC0_Pin KC3_Pin KC1_Pin KC2_Pin */
-  GPIO_InitStruct.Pin = KC0_Pin|KC3_Pin|KC1_Pin|KC2_Pin;
+  /*Configure GPIO pins : KC0_Pin PB13 PB14 KC3_Pin
+                           KC1_Pin KC2_Pin */
+  GPIO_InitStruct.Pin = KC0_Pin|GPIO_PIN_13|GPIO_PIN_14|KC3_Pin
+                          |KC1_Pin|KC2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -384,19 +405,28 @@ void Keypad(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-
-	    SSD1306_Init();
-	    SSD1306_GotoXY (0,0);
-	    //SSD1306_Puts ("Voltage:", &Font_11x18, 1);
-	    SSD1306_Puts ("Enter Code:", &Font_11x18, 1);
-	    SSD1306_GotoXY (0, 30);
-	    SSD1306_UpdateScreen();
-	    SSD1306_UpdateScreen();
-	    HAL_Delay (500);
-
 	  key = Get_Key();
 	  sprintf(hold, "%c", key);
+
 	  HAL_UART_Transmit(&huart2, (uint8_t *)hold, strlen(hold), 100);
+
+	  password[idx] = key;
+	  idx++;
+	  HAL_UART_Transmit(&huart2, (uint8_t *)password, strlen(password), 100);
+
+	  if (idx == 6) {
+		  char out[] = "success";
+
+		  HAL_UART_Transmit(&huart2, (uint8_t *)out, strlen(out), 100);
+		  idx = 0;
+		  isArmed = true;
+	  }
+
+//	  if (key != '') {
+//		  password[index] = key;
+//		  index++;
+//		  key = NULL;
+//	  }
   }
   /* USER CODE END Keypad */
 }
@@ -414,9 +444,30 @@ void Display(void const * argument)
   /* Infinite loop */
   for(;;)
   {
+//	  SSD1306_GotoXY (0, 30);
+//	  SSD1306_UpdateScreen();
+//
+//
+////	  SSD1306_Puts ("*", &Font_11x18, 1);
+//	  for (int i = 0; i < idx; i++) {
+//		  SSD1306_Puts ("4", &Font_11x18, 1);
+//		  SSD1306_UpdateScreen();
+//	  }
+////	  SSD1306_UpdateScreen();
+//	  HAL_Delay (500);
+
+//	    SSD1306_Init();
+//	    SSD1306_GotoXY (0,0);
+//	    //SSD1306_Puts ("Voltage:", &Font_11x18, 1);
+//	    SSD1306_Puts ("Enter Code:", &Font_11x18, 1);
+////	    SSD1306_GotoXY (0, 30);
+////	    SSD1306_UpdateScreen();
+////	    SSD1306_UpdateScreen();
+////	    HAL_Delay (500);
+
 	  SSD1306_GotoXY (0, 30);
 	  SSD1306_UpdateScreen();
-	  SSD1306_Puts (hold, &Font_11x18, 1);
+	  SSD1306_Puts (msg, &Font_11x18, 1);
 	  SSD1306_UpdateScreen();
 	  HAL_Delay (500);
   }
@@ -425,7 +476,7 @@ void Display(void const * argument)
 
 /* USER CODE BEGIN Header_RedGreenLED */
 /**
-* @brief Function implementing the ArmLED thread.
+* @brief Function implementing the LEDTask thread.
 * @param argument: Not used
 * @retval None
 */
@@ -436,7 +487,14 @@ void RedGreenLED(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+	  if(!isArmed) {
+		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
+	  } else {
+		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
+	  }
+
   }
   /* USER CODE END RedGreenLED */
 }
@@ -454,7 +512,10 @@ void ArmState(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+	  if (!isArmed) {
+//		  password = hold;
+//		  isArmed = true;
+	  }
   }
   /* USER CODE END ArmState */
 }
