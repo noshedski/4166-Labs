@@ -64,8 +64,8 @@ all: main-build
 main-build: 0004_Alarm_Keypad.elf secondary-outputs
 
 # Tool invocations
-0004_Alarm_Keypad.elf 0004_Alarm_Keypad.map: $(OBJS) $(USER_OBJS) C:\Users\calvi\Downloads\0004_Alarm_Keypad\0004_Alarm_Keypad\STM32F446RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "0004_Alarm_Keypad.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\calvi\Downloads\0004_Alarm_Keypad\0004_Alarm_Keypad\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="0004_Alarm_Keypad.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+0004_Alarm_Keypad.elf 0004_Alarm_Keypad.map: $(OBJS) $(USER_OBJS) C:\Users\calvi\OneDrive\ -\ University\ of\ Ottawa\Year\ 4\Winter\ 2024\CEG\ 4166\ Real-Time\ Systems\ Design\Labs\Lab\ 3\STM32F446RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "0004_Alarm_Keypad.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\calvi\OneDrive - University of Ottawa\Year 4\Winter 2024\CEG 4166 Real-Time Systems Design\Labs\Lab 3\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="0004_Alarm_Keypad.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
