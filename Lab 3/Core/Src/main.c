@@ -59,11 +59,13 @@ osThreadId LEDTaskHandle;
 extern char key;
 char hold[4];
 char password[6];
+char storedPassword[6];
 bool isArmed = false;
 int idx = 0;
 char msg[12] = "1";
 int counter = 0;
 char space[] = " ";
+bool stateDisplayed = false;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -405,19 +407,54 @@ void Numberpad(void const * argument)
 
 	  password[idx] = key;
 	  idx++;
+	  HAL_UART_Transmit(&huart2, (uint8_t *)idx, idx, 100);
 	  HAL_UART_Transmit(&huart2, (uint8_t *)password, strlen(password), 100);
 	  HAL_UART_Transmit(&huart2, (uint8_t *)space, strlen(space), 100);
 
-	  if (idx == 6) {
-		  char out[] = "success";
-		  HAL_UART_Transmit(&huart2, (uint8_t *)out, strlen(out), 100);
-		  HAL_Delay (500);
+	  if (!isArmed) {
+		  if (idx == 6) {
+			  char out[] = "success";
+			  HAL_UART_Transmit(&huart2, (uint8_t *)out, strlen(out), 100);
+			  strcpy(storedPassword, password);
+			  memset(password, 0, sizeof(password));
+			  stateDisplayed = false;
+			  isArmed = true;
+			  HAL_Delay (500);
+			  idx = 0;
+		  }
+	  } else {
 		  isArmed = true;
-	  }
+		  if (idx == 6) {
+			  HAL_UART_Transmit(&huart2, (uint8_t *)storedPassword, strlen(storedPassword), 100);
+			  HAL_UART_Transmit(&huart2, (uint8_t *)space, strlen(space), 100);
+			  HAL_UART_Transmit(&huart2, (uint8_t *)password, strlen(password), 100);
 
-	  if (idx > 6){
-		  isArmed = true;
-		  idx = 0;
+			  bool same = true;
+			  for (int i = 0; i < 6; i++) {
+				  if (password[i] != storedPassword[i]) {
+					  same = false;
+					  break;
+				  }
+			  }
+
+			  if (same) {
+				  char out[] = "success";
+				  HAL_UART_Transmit(&huart2, (uint8_t *)out, strlen(out), 100);
+				  memset(password, 0, sizeof(password));
+				  memset(storedPassword, 0, sizeof(storedPassword));
+				  stateDisplayed = false;
+				  isArmed = false;
+				  HAL_Delay (500);
+				  idx = 0;
+
+			  } else {
+				  idx = 0;
+				  memset(password, 0, sizeof(password));
+			  }
+		  } else if (idx > 6){
+			  isArmed = true;
+			  idx = 0;
+		  }
 	  }
   }
   /* USER CODE END Numberpad */
@@ -436,23 +473,42 @@ void LCDDisplay(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-	  SSD1306_GotoXY (0, 30);
-	  SSD1306_UpdateScreen();
-	  for (int i = 0; i < idx; i++) {
-		  if ((idx != 0) && (!isArmed)) {
-			  SSD1306_Puts ("*", &Font_11x18, 1);
-		  }
-	  }
+//	  SSD1306_GotoXY (0, 30);
+//	  SSD1306_UpdateScreen();
+//	  for (int i = 0; i < idx; i++) {
+//		  if ((idx != 0) && (!isArmed)) {
+//			  SSD1306_Puts ("*", &Font_11x18, 1);
+//		  }
+//	  }
 
 //	  SSD1306_Puts (hold, &Font_11x18, 1);
 	  SSD1306_UpdateScreen();
 	  HAL_Delay (500);
 
-	  if (isArmed) {
-		  SSD1306_GotoXY (0, 0);
-		  SSD1306_Fill(SSD1306_COLOR_BLACK);
-		  SSD1306_Puts ("ARMED", &Font_11x18, 1);
+	  if (!stateDisplayed) {
+		  if (isArmed) {
+			  SSD1306_GotoXY (0, 0);
+			  SSD1306_Fill(SSD1306_COLOR_BLACK);
+			  SSD1306_Puts ("ARMED", &Font_11x18, 1);
+//		  		stateDisplayed = true;
+		  } else {
+			  SSD1306_GotoXY (0, 0);
+			  SSD1306_Fill(SSD1306_COLOR_BLACK);
+			  SSD1306_Puts ("DISARMED", &Font_11x18, 1);
+		  }
+		  stateDisplayed = true;
+	  } else {
+		  SSD1306_GotoXY (0,0);
+		  SSD1306_Puts ("Enter Code:", &Font_11x18, 1);
+		  SSD1306_GotoXY (0, 30);
+		  SSD1306_UpdateScreen();
+		  for (int i = 0; i < idx; i++) {
+			  if ((idx != 0) && (!isArmed)) {
+				  SSD1306_Puts ("*", &Font_11x18, 1);
+			  }
+		  }
 	  }
+
   }
   /* USER CODE END LCDDisplay */
 }
