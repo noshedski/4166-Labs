@@ -63,6 +63,7 @@ bool isArmed = false;
 int idx = 0;
 char msg[12] = "1";
 int counter = 0;
+char space[] = " ";
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -119,6 +120,11 @@ int main(void)
     SSD1306_Init();
     SSD1306_GotoXY (0,0);
     //SSD1306_Puts ("Voltage:", &Font_11x18, 1);
+    SSD1306_Puts ("NOT ARMED", &Font_11x18, 1);
+    SSD1306_UpdateScreen();
+    HAL_Delay (5000);
+    SSD1306_Fill(SSD1306_COLOR_BLACK);
+    SSD1306_GotoXY (0,0);
     SSD1306_Puts ("Enter Code:", &Font_11x18, 1);
     SSD1306_GotoXY (0, 30);
     SSD1306_UpdateScreen();
@@ -395,18 +401,23 @@ void Numberpad(void const * argument)
   {
 	  key = Get_Key();
 	  sprintf(hold, "%c", key);
-	  HAL_UART_Transmit(&huart2, (uint8_t *)hold, strlen(hold), 100);
+	  //HAL_UART_Transmit(&huart2, (uint8_t *)hold, strlen(hold), 100);
 
 	  password[idx] = key;
 	  idx++;
 	  HAL_UART_Transmit(&huart2, (uint8_t *)password, strlen(password), 100);
+	  HAL_UART_Transmit(&huart2, (uint8_t *)space, strlen(space), 100);
 
 	  if (idx == 6) {
 		  char out[] = "success";
-
 		  HAL_UART_Transmit(&huart2, (uint8_t *)out, strlen(out), 100);
-		  idx = 0;
+		  HAL_Delay (500);
 		  isArmed = true;
+	  }
+
+	  if (idx > 6){
+		  isArmed = true;
+		  idx = 0;
 	  }
   }
   /* USER CODE END Numberpad */
@@ -427,8 +438,8 @@ void LCDDisplay(void const * argument)
   {
 	  SSD1306_GotoXY (0, 30);
 	  SSD1306_UpdateScreen();
-	  if(counter == 1) {
-		  for (counter == 1; i <= idx; i++) {
+	  for (int i = 0; i < idx; i++) {
+		  if ((idx != 0) && (!isArmed)) {
 			  SSD1306_Puts ("*", &Font_11x18, 1);
 		  }
 	  }
@@ -436,6 +447,12 @@ void LCDDisplay(void const * argument)
 //	  SSD1306_Puts (hold, &Font_11x18, 1);
 	  SSD1306_UpdateScreen();
 	  HAL_Delay (500);
+
+	  if (isArmed) {
+		  SSD1306_GotoXY (0, 0);
+		  SSD1306_Fill(SSD1306_COLOR_BLACK);
+		  SSD1306_Puts ("ARMED", &Font_11x18, 1);
+	  }
   }
   /* USER CODE END LCDDisplay */
 }
